@@ -17,19 +17,20 @@
     const state = reactive({ arr: [1, 2, 3, 4, 5] })
 
     effect(() => {
-      app.innerHTML = state.arr + '--' + state.arr.length
+      app.innerHTML = state.arr + '-'
     })
 
-    setTimeout(() => {
-      // 改变length
-      // state.arr.length = 2;
-      // 修改
-      // state.arr[1] = 10
-      // 新增
-      // state.arr.push(19)
+    // 数组长度变短
+    // state.arr.length = 2
 
-      state.arr[100] = 1
-    }, 1000);
+    // 修改
+    // state.arr[1] = 10
+
+    // 新增，同时改变数组长度
+    // state.arr[10] = 1
+
+    // 使用数组函数push,pop
+    // state.arr.push(19)
   </script>
 </body>
 

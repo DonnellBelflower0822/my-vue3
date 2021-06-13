@@ -6,7 +6,6 @@ export function isVNode(vnode) {
 
 export function createVNode(type, props, children = null) {
   // 根据type区分元素和组件
-
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : (isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0);
@@ -34,6 +33,7 @@ export function createVNode(type, props, children = null) {
   return vnode;
 }
 
+// 设置children的类型
 function normalizeChildren(vnode, children) {
   let type = 0;
   if (children === null) { }

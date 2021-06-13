@@ -6,7 +6,7 @@ export const PublicInstanceProxyHandlers = {
       return;
     }
 
-    const { setupState, props, data } = instance;
+    const { setupState, props, data = {} } = instance;
     if (hasOwn(setupState, key)) {
       return setupState[key];
     } else if (hasOwn(data, key)) {
@@ -23,7 +23,7 @@ export const PublicInstanceProxyHandlers = {
       setupState[key] = value;
     } else if (hasOwn(data, key)) {
       data[key] = value;
-    }    else if (hasOwn(props, key)) {
+    } else if (hasOwn(props, key)) {
       props[key] = value;
     }
     return true;

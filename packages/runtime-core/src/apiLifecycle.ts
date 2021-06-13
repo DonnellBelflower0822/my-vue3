@@ -1,10 +1,17 @@
 import { currentInstance, setCurrentInstance } from './component';
 
 const enum LifeCycleHook {
+  BEFORE_CREATE = 'bc',
+  CREATED = 'c',
+
   BEFORE_MOUNT = 'bm',
   MOUNTED = 'm',
+
   BEFORE_UPDATE = 'bu',
   UPDATED = 'u',
+
+  BEFORE_UNMOUNT = 'bum',
+  UNMOUNTED = 'um'
 }
 
 const injectHook = (type, hook, target) => {
@@ -14,6 +21,7 @@ const injectHook = (type, hook, target) => {
 
   const hooks = target[type] || (target[type] = []);
   const wrap = () => {
+    // 确保钩子调用时都能获取当前的实例
     setCurrentInstance(target);
     hook();
     setCurrentInstance(null);
@@ -23,6 +31,7 @@ const injectHook = (type, hook, target) => {
 
 const createHook = (lifeCycle) => {
   return (hook, target = currentInstance) => {
+    // 标记当前实例
     injectHook(lifeCycle, hook, target);
   };
 };
@@ -35,5 +44,6 @@ export const invokerArrayFns = (fns) => {
 
 export const onBeforeMount = createHook(LifeCycleHook.BEFORE_MOUNT);
 export const onMounted = createHook(LifeCycleHook.MOUNTED);
+
 export const onBeforeUpdate = createHook(LifeCycleHook.BEFORE_UPDATE);
 export const onUpdated = createHook(LifeCycleHook.UPDATED);

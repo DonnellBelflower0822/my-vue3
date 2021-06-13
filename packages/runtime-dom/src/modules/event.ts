@@ -1,11 +1,11 @@
 export const patchEvent = (el, key: string, fn) => {
   // 缓存
   const invokers = el._vei || (el._vei = {});
-  const exists = invokers[key];
+  const existsEventFunction = invokers[key];
 
-  if (fn && exists) {
+  if (fn && existsEventFunction) {
     // 修改
-    exists.value = fn;
+    existsEventFunction.value = fn;
   } else {
     const eventName = key.slice(2).toLowerCase();
     if (fn) {
@@ -14,7 +14,7 @@ export const patchEvent = (el, key: string, fn) => {
       el.addEventListener(eventName, invoker);
     } else {
       // 删除
-      el.removeEventListener(eventName, exists);
+      el.removeEventListener(eventName, existsEventFunction);
       invokers[key] = undefined;
     }
   }

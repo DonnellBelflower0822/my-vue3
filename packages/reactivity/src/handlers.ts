@@ -32,12 +32,13 @@ const shallowReadonlyGet = createGet(true, true);
 function createSet(isReadonly = false) {
   return function (target, key, value, receiver) {
     const oldValue = Reflect.get(target, key);
-    const result = Reflect.set(target, key, value, receiver);
 
     // 修改数组的索引
     const hasKey = isArray(target) && isInteger(key)
       ? Number(key) < target.length - 1
       : hasOwn(target, key);
+
+    const result = Reflect.set(target, key, value, receiver);
 
     if (!hasKey) {
       // 新增

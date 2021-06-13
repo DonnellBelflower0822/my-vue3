@@ -4,7 +4,7 @@ import { TrackOptType, TriggerOpt } from './operator';
 import { reactive } from './reactive';
 
 // 传进来的是普通值
-export function ref(value) {
+export function ref(value: string | number | boolean | object) {
   return createRef(value);
 }
 
@@ -29,7 +29,9 @@ class RefImpl {
   public _v_isRef = true;
 
   public constructor(value, isShallow) {
+    // 如果是深度且是对象，只用reactive去处理响应式
     this._value = isShallow ? value : convert(value);
+    // 保存原值
     this._rawValue = value;
 
     this.isShallow = isShallow;
@@ -70,6 +72,7 @@ class ObjectRefImpl {
 
 // 传进来的是响应式对象
 // 将一个对象的属性变成ref
+// 代理了对象的属性
 export function toRef(target, key) {
   return new ObjectRefImpl(target, key);
 }

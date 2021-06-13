@@ -31,8 +31,10 @@ class ComputedRefImpl {
     this.effect = effect(getter, {
       // 不是立即执行
       lazy: true,
+      // 调度
       scheduler: () => {
         if (!this._dirty) {
+          // 设置下次get的时候执行重新获取最新的值
           // 修改this._dirty,在下次获取时就可以去获取新值
           this._dirty = true;
           // 触发收集这个依赖的effect

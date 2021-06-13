@@ -12,22 +12,16 @@
   <div id="app"></div>
   <script src="../dist/reactivity.global.js"></script>
   <script>
-    const { ref, effect } = VueReactivity
+    const { toRef, reactive, effect } = VueReactivity
 
-    const name = ref('hello')
-    const age = ref({ num: 10 })
+    const person = reactive({ name: 'allen', age: 10 })
+    const name = toRef(person, 'name')
+    const age = toRef(person, 'age')
 
     effect(() => {
-      app.innerHTML = name.value + '---' + age.value.num
+      app.innerHTML = name.value + '---' + age.value
     })
 
-    setTimeout(() => {
-      name.value = 'world'
-    }, 1000);
-
-    setTimeout(() => {
-      age.value.num = 20
-    }, 2000);
   </script>
 </body>
 

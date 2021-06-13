@@ -51,12 +51,17 @@ function setupStatefulComponent(instance) {
   const Component = instance.type;
   const { setup } = Component;
 
-  // instance.setupState =
   // 有无setup
   if (setup) {
     const setupContext = createContext(instance);
+
+    // 进入setup前设置当前实例
     currentInstance = instance;
-    const setupResult = setup(instance.props, setupContext);
+
+    const setupResult = setup(instance.proxy, setupContext);
+
+    currentInstance = null;
+    
     handleSetupResult(instance, setupResult);
   }
   else {
@@ -64,18 +69,24 @@ function setupStatefulComponent(instance) {
   }
 }
 
+// 处理setup返回结果
 function handleSetupResult(instance, setupResult) {
   if (isFunction(setupResult)) {
+    // 如果setup返回的是函数，则将这个函数作为实例的render
     instance.render = setupResult;
   } else if (isObject(setupResult)) {
+    // 如果是对象，则保存为setupState
     instance.setupState = setupResult;
   }
 
   finishComponentSetup(instance);
 }
 
+// 保证instance有render
 function finishComponentSetup(instance) {
   const { type: Component } = instance;
+
+  // 处理实例还没有render的，则从type中取render
   if (!instance.render) {
     if (!Component.render && Component.template) {
       // 对template进行模板编译成render

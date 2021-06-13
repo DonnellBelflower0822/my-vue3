@@ -14,39 +14,40 @@
   <script>
     const { createApp, h, ref, onMounted, onBeforeUpdate, onUpdated, onBeforeMount, getCurrentInstance } = VueRuntimeDom
 
+    // 组件更新
+    // 自身数据变
+    // 外界属性变化
+
+    // 父传入儿子传入属性，儿子更新是否更新， 内部会将儿子自身的更新移除
+    // 儿子使用了属性，属性变化了要不要更新  只执行一次
+
+    const Comp1 = {
+      render() {
+        return h('div', {}, 'Comp1')
+      }
+    }
+
+    const Comp2 = {
+      render() {
+        return h('div', {}, 'Comp2')
+      }
+    }
+
     const App = {
       setup(props, context) {
-        // const instance = getCurrentInstance()
-        const flag = ref(0)
-        onMounted(() => {
-          console.log('onMounted')
-        })
-        onBeforeMount(() => {
-          console.log('onBeforeMount')
-        })
-        onBeforeUpdate(() => {
-          console.log('onBeforeUpdate')
-        })
-        onUpdated(() => {
-          console.log('onUpdated')
-        })
+        const flag = ref(true)
         return {
           flag
         }
       },
       render(proxy) {
         return h('div', {},
-          [
-            h('div', {}, proxy.flag.value),
-            proxy.flag.value,
-            h('div', {
-              onClick: () => {
-                proxy.flag.value = 10
-                proxy.flag.value = 20
-                proxy.flag.value = 10
-              }
-            }, '按钮')
-          ]
+        proxy.flag.value ? h(Comp1) : h(Comp2),
+          h('button', {
+            onClick: () => {
+              proxy.flag.value = !proxy.flag.value
+            }
+          }, '按钮')
         )
       }
     }

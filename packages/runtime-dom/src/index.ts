@@ -8,6 +8,7 @@ const rendererOptions = { ...nodeOps, patchProp };
 export function createApp(rootComponent, rootProps = null) {
   const app: any = createRenderer(rendererOptions).createApp(rootComponent, rootProps);
   const { mount } = app;
+  // 重写mount，执行一些额外操作
   app.mount = function (container) {
     container = nodeOps.querySelector(container);
     container.innerHTML = '';

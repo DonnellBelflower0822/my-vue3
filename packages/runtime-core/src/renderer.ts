@@ -3,11 +3,12 @@ import { ShapeFlags } from '@vue/shared/src';
 import { createAppApi } from './apiCreateApp';
 import { invokerArrayFns } from './apiLifecycle';
 import { createComponentInstance, setupComponent } from './component';
-import { queueJob } from './scheduler';
+import { queueJob, invalidateJob } from './scheduler';
 import { normalizeVNode, TEXT } from './vnode';
 
 // 创建一个渲染器
 export function createRenderer(rendererOptions) {
+  // 获取runtime-dom传过来的dom操作方法
   const {
     insert: hostInsert,
     remove: hostRemove,
@@ -20,48 +21,73 @@ export function createRenderer(rendererOptions) {
     nextSibling: hostNextSibling
   } = rendererOptions;
 
-  const setupRenderEffect = (instance, container) => {
+  const updateComponentPreRender = (instance, nextVNode) => {
+    nextVNode.component = instance;
+  };
+
+  const setupRenderEffect = (instance, vnode, container) => {
     // 组件级更新
     instance.update = effect(
       function componentEffect() {
         if (!instance.isMounted) {
           const { bm, m } = instance;
 
-          // 初次渲染
+          // beforeMount
           if (bm) {
             invokerArrayFns(bm);
           }
 
           const { proxy } = instance;
+          // 类比react的classComponent，调用render才是要渲染
           const subTree = instance.subTree = instance.render.call(proxy, proxy);
           // console.log(subTree);
 
           patch(null, subTree, container);
+
           // 初始化
           instance.isMounted = true;
 
+          vnode.el = subTree.el;
+
+          // 执行mounted
           if (m) {
+            // 在微任务去调用mounted
             Promise.resolve().then(() => {
               invokerArrayFns(m);
             });
           }
         } else {
           const { bu, u } = instance;
+          let { next } = instance;
+
+          // 用next赋值给
+          if (next) {
+            next.el = vnode.el;
+            updateComponentPreRender(instance, next);
+          } else {
+            next = vnode;
+          }
+
+          // beforeUpdate
           if (bu) {
             invokerArrayFns(bu);
           }
+
           // 更新
           const prevTree = instance.subTree;
           const { proxy } = instance;
           const nextTree = instance.render.call(proxy, proxy);
           patch(prevTree, nextTree, container);
 
+          // updated
           if (u) {
             invokerArrayFns(u);
           }
         }
       },
       {
+        // 调度
+        // 处理多次调用，只执行一次
         scheduler: queueJob
       }
     );
@@ -79,18 +105,23 @@ export function createRenderer(rendererOptions) {
     const { props, shapeFlag, type, children } = vnode;
     const el = (vnode.el = hostCreateElement(type));
 
+    // 处理属性
     if (props) {
       for (const key in props) {
         hostPatchProp(el, key, null, props[key]);
       }
     }
 
+    // 设置元素children
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // 文本内容
       hostSetElementText(el, children);
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      // 元素数组
       mountChildren(children, el);
     }
 
+    // 最后挂载
     hostInsert(el, container, anchor);
   };
 
@@ -153,6 +184,7 @@ export function createRenderer(rendererOptions) {
     // console.log(i, e1, e2);
     // 比较有一方已经比完了
     if (i > e1) {
+      console.log(i, e1, e2);
       // 老的少，新的多
       /**
        新增: 后增
@@ -165,7 +197,7 @@ export function createRenderer(rendererOptions) {
       c2: [a,b,c,d]
       i: 0, e1: -1, e2: 1 -> 新增 [i,e2]  = [0,1]
        */
-      if (i < e2) {
+      if (i <= e2) {
         const nextPos = e2 + 1;
         const anchor = nextPos < c2.length ? c2[nextPos].el : null;
         // 有新增
@@ -175,6 +207,14 @@ export function createRenderer(rendererOptions) {
         }
       }
     } else if (i > e2) {
+      console.log(
+        `
+        删除
+        i: ${i},
+        e1: ${e1},
+        e2: ${e2}
+        `
+      );
       /**
       删除：后删
       c1: [a,b,c,d]
@@ -192,6 +232,8 @@ export function createRenderer(rendererOptions) {
         i++;
       }
     } else {
+      // 乱序
+
       /**
        c1: [a,b,c,d,e,f,g]
        c2: [a,b,e,c,d,h,f,g]
@@ -209,8 +251,8 @@ export function createRenderer(rendererOptions) {
       }
 
       const toBePatched = e2 - s2 + 1;
-      // 新的索引是数组的索引
-      // 旧的索引是当前索引的值
+      // 数组的索引代表新节点在数组的索引
+      // 数组的索引对应的值代表旧节点在数组的索引
       const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
 
       // 去老的找有没有可以复用的
@@ -229,6 +271,8 @@ export function createRenderer(rendererOptions) {
           patch(oldVNode, c2[newIndex], el);
         }
       }
+
+      console.log(newIndexToOldIndexMap);
 
       for (let i = toBePatched - 1; i >= 0; i--) {
         // 找到h的索引
@@ -320,16 +364,62 @@ export function createRenderer(rendererOptions) {
     }
   };
 
+  function hasPropsChanged(prevProps, nextProps) {
+    // 长度不一致，变了
+    if (Object.keys(prevProps).length !== Object.keys(nextProps).length) {
+      return true;
+    }
+
+    for (const key in nextProps) {
+      if (prevProps[key] !== nextProps[key]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function shouldUpdateComponent(n1, n2) {
+    const { props: prevProps } = n1;
+    const { props: nextProps } = n2;
+
+    if (prevProps === nextProps) {
+      return false;
+    }
+
+    if (!prevProps) {
+      return !!nextProps;
+    }
+
+    return hasPropsChanged(prevProps, nextProps);
+  }
+
   const mountComponent = (vnode, container) => {
     // 组件渲染
     // 核心流程：setup返回值  -> render
 
-    // 1.实例
+    // 1.实例,同时挂载到虚拟节点上
     const instance = vnode.component = createComponentInstance(vnode);
     // 2. 需要的数据解析到实例上
     setupComponent(instance);
     // 3. 创建effect让render执行
-    setupRenderEffect(instance, container);
+    setupRenderEffect(instance, vnode, container);
+  };
+
+  // 更新组件
+  const updateComponent = (n1, n2) => {
+    // 复用component
+    const instance = n2.component = n1.component;
+
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2;
+
+      // 去掉子组件的update
+      invalidateJob(instance.update);
+
+      // 最后执行一次更新
+      instance.update();
+    }
   };
 
   // 处理组件
@@ -339,13 +429,20 @@ export function createRenderer(rendererOptions) {
       mountComponent(n2, container);
     } else {
       // 组件更新
+      updateComponent(n1, n2);
     }
   };
 
   const processText = (n1, n2, container) => {
     if (n1 === null) {
+      // 挂载
       n2.el = hostCreateText(n2.children);
       hostInsert(n2.el, container);
+    } else {
+      const el = n2.el = n1.el;
+      if (n2.children !== n1.children) {
+        hostSetText(el, n2.children);
+      }
     }
   };
 
@@ -385,8 +482,6 @@ export function createRenderer(rendererOptions) {
   };
 
   const render = (vnode, container) => {
-    // console.log(vnode, container);
-    console.log(vnode);
     patch(null, vnode, container);
   };
 

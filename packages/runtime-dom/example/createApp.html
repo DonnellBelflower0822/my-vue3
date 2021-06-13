@@ -14,6 +14,16 @@
   <script>
     const { createApp, h, reactive } = VueRuntimeDom
 
+    const Component = {
+      props: {
+        name: { type: String }
+      },
+      render(proxy) {
+        console.log(proxy)
+        return h('div', 'Component' + proxy.name)
+      }
+    }
+
     const App = {
       setup(props, context) {
         // console.log('ok', props, context)
@@ -30,7 +40,7 @@
                 state.name = 'allen'
               }
             },
-            ['hello world', h('span', state.name)]
+            ['hello world', h('span', state.name), '222', h(Component, { name: state.name })]
           )
         }
       },
