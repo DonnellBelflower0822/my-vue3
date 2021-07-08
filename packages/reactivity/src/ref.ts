@@ -25,7 +25,7 @@ class RefImpl {
   // 存放原值
   public _rawValue;
   private isShallow;
-
+  // 增加标识
   public _v_isRef = true;
 
   public constructor(value, isShallow) {
@@ -33,20 +33,23 @@ class RefImpl {
     this._value = isShallow ? value : convert(value);
     // 保存原值
     this._rawValue = value;
-
     this.isShallow = isShallow;
   }
 
   get value() {
+    // 收集此对象的 value 字段的依赖
     track(this, 'value', TrackOptType.GET);
     return this._value;
   }
 
   set value(newValue) {
+    // 判断是否有改变
     if (hasChanged(newValue, this._rawValue)) {
       this._rawValue = newValue;
+      // 如果非浅层，则判断是否是对象，如果是对象则进行调用reactive
       this._value = this.isShallow ? newValue : convert(newValue);
-
+      
+      // 触发此对象 设置 value 字段的更新
       trigger(this, TriggerOpt.SET, 'value', newValue, this._value);
     }
   }
@@ -71,7 +74,7 @@ class ObjectRefImpl {
 }
 
 // 传进来的是响应式对象
-// 将一个对象的属性变成ref
+// 将一个响应式对象的属性变成ref
 // 代理了对象的属性
 export function toRef(target, key) {
   return new ObjectRefImpl(target, key);

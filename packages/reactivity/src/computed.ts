@@ -1,8 +1,15 @@
-import { isFunction } from '@vue/shared/src';
+import { isFunction, isObject } from '@vue/shared/src';
 import { effect, track, trigger } from './effect';
 import { TrackOptType, TriggerOpt } from './operator';
 
-export function computed(getterOrOptions) {
+type Getter<T = unknown> = () => T;
+type GetterOption<T = unknown> = {
+  get: Getter<T>;
+  set: () => void;
+};
+type GetterOrOptions<T> = Getter<T> | GetterOption<T>;
+
+export function computed<T = unknown>(getterOrOptions: GetterOrOptions<T>) {
   let getter;
   let setter;
 
@@ -11,9 +18,9 @@ export function computed(getterOrOptions) {
     setter = () => {
       console.log('no change');
     };
-  } else {
-    getter = getterOrOptions.getter;
-    setter = getterOrOptions.setter;
+  } else if (isObject(getterOrOptions)) {
+    getter = (getterOrOptions as GetterOption).get;
+    setter = (getterOrOptions as GetterOption).set;
   }
 
   return new ComputedRefImpl(getter, setter);

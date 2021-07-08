@@ -93,16 +93,22 @@ export function createRenderer(rendererOptions) {
     );
   };
 
+  // 挂载子节点
   const mountChildren = (children, el) => {
     for (let i = 0; i < children.length; i++) {
+      // 标准化子VNode
+      // 如果是字符串：则生成文本节点
       const child = normalizeVNode(children[i]);
+      // 调用patch进行分别挂载
       patch(null, child, el);
     }
   };
 
+  // 挂载Element元素
   const mountElement = (vnode, container, anchor = null) => {
-    // 递归
     const { props, shapeFlag, type, children } = vnode;
+
+    // 创建元素
     const el = (vnode.el = hostCreateElement(type));
 
     // 处理属性
@@ -112,16 +118,17 @@ export function createRenderer(rendererOptions) {
       }
     }
 
-    // 设置元素children
+    // 处理元素children
+    // 1. children为文本节点
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       // 文本内容
       hostSetElementText(el, children);
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      // 元素数组
+      // 2. 元素数组
       mountChildren(children, el);
     }
 
-    // 最后挂载
+    // 挂载到容器上
     hostInsert(el, container, anchor);
   };
 
@@ -323,24 +330,26 @@ export function createRenderer(rendererOptions) {
       if (c1 !== c2) {
         hostSetElementText(container, c2);
       }
-    } else {
-      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          // 两次都是数组
-          patchKeyedChildren(c1, c2, container);
-        } else {
-          // 老的没有孩子, null
-          unmountChildren(c1);
-        }
+      return;
+    }
+
+    if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 两次都是数组
+        patchKeyedChildren(c1, c2, container);
       } else {
-        // 上一次是文本
-        if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-          hostSetElementText(container, '');
-        }
-        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          mountChildren(c2, container);
-        }
+        // 老的没有孩子, null
+        unmountChildren(c1);
       }
+      return;
+    }
+    
+    // 上一次是文本
+    if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      hostSetElementText(container, '');
+    }
+    if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      mountChildren(c2, container);
     }
   };
 
@@ -436,11 +445,16 @@ export function createRenderer(rendererOptions) {
   const processText = (n1, n2, container) => {
     if (n1 === null) {
       // 挂载
+      // 新建文本节点
       n2.el = hostCreateText(n2.children);
+      // 插入父容器
       hostInsert(n2.el, container);
     } else {
+      // 更新：复用旧节点的元素
       const el = n2.el = n1.el;
+      // 比较新旧文本节点的children是否一致
       if (n2.children !== n1.children) {
+        // 如果不同只重新设置文本内容
         hostSetText(el, n2.children);
       }
     }
@@ -454,9 +468,17 @@ export function createRenderer(rendererOptions) {
     hostRemove(vnode.el);
   };
 
+  /**
+   * 打补丁：挂载和更新的功能
+   * @param n1 旧节点
+   * @param n2 新节点
+   * @param container 挂载容器
+   * @param anchor 当前元素的参照物
+   */
   const patch = (n1, n2, container, anchor = null) => {
     const { shapeFlag, type } = n2;
 
+    // 如果有旧vnode，且不是相同类型：直接把旧节点干掉，走挂载的流程
     if (n1 && !isSameVNodeType(n1, n2)) {
       //  删除以前，换成新的
       anchor = hostNextSibling(n1);
@@ -464,18 +486,18 @@ export function createRenderer(rendererOptions) {
       n1 = null;
     }
 
+    // 根据不同类型，做不同操作
     switch (type) {
       case TEXT:
         // 文本节点，特殊处理
         processText(n1, n2, container);
         break;
       default:
-        // 针对不同类型做出初始化操作
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          // console.log('元素');
+          // 元素
           processElement(n1, n2, container, anchor);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          // console.log('组件');
+          // 组件
           processComponent(n1, n2, container);
         }
     }

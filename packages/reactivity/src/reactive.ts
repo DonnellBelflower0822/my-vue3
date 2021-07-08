@@ -26,7 +26,7 @@ export function shallowReadonly(obj) {
   return createReactiveObject(obj, true, shallowReadonlyHandler);
 }
 
-// 缓存已经处理过的对象
+// 缓存已经处理过的对象：在target销毁时能被垃圾回收
 const reactiveMap = new WeakMap();
 const readonlyMap = new WeakMap();
 

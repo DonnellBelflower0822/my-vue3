@@ -4,8 +4,9 @@ export function isVNode(vnode) {
   return vnode._v_isVnode;
 }
 
+// 目前只考虑元素和组件
 export function createVNode(type, props, children = null) {
-  // 根据type区分元素和组件
+  // 标识：为后期patch比较提供便利
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : (isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0);
@@ -28,6 +29,7 @@ export function createVNode(type, props, children = null) {
     shapeFlag
   };
 
+  // 根据children标识
   normalizeChildren(vnode, children);
 
   return vnode;

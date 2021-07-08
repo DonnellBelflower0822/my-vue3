@@ -4,7 +4,7 @@ const execa = require('execa')
 
 const targets = fs.readdirSync('packages').filter(f => {
   // 过滤非目录
-  return fs.statSync(`packages/${f}`).isDirectory
+  return f !== '.DS_Store' && fs.statSync(`packages/${f}`).isDirectory
 })
 
 async function build(target) {

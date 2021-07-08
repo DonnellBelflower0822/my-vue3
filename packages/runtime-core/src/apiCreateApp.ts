@@ -1,6 +1,7 @@
 import { createVNode } from './vnode';
 
 export function createAppApi(render) {
+  // 根组件，根组件的props
   return function createApp(rootComponent, rootProps) {
     const app = {
       _props: rootProps,
