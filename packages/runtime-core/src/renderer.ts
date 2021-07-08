@@ -167,7 +167,9 @@ export function createRenderer(rendererOptions) {
     while (i <= e1 && i <= e2) {
       const n1 = c1[i];
       const n2 = c2[i];
+      // 判断是否是相同类型
       if (isSameVNodeType(n1, n2)) {
+        // 相同节点走更新操作
         patch(n1, n2, el);
       } else {
         break;
@@ -188,7 +190,6 @@ export function createRenderer(rendererOptions) {
       e2--;
     }
 
-    // console.log(i, e1, e2);
     // 比较有一方已经比完了
     if (i > e1) {
       console.log(i, e1, e2);
@@ -323,16 +324,18 @@ export function createRenderer(rendererOptions) {
     // 新的是文本
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // 卸载
+        // 旧的是数组，卸载
         unmountChildren(c1);
       }
 
       if (c1 !== c2) {
+        // 新旧children不一致重新设置
         hostSetElementText(container, c2);
       }
       return;
     }
 
+    // 旧的是数组
     if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         // 两次都是数组
@@ -343,11 +346,12 @@ export function createRenderer(rendererOptions) {
       }
       return;
     }
-    
-    // 上一次是文本
+
+    // 旧的是文本, 新的是非文本
     if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
       hostSetElementText(container, '');
     }
+
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(c2, container);
     }
