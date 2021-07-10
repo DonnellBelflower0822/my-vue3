@@ -26,7 +26,7 @@ export function createRenderer(rendererOptions) {
   };
 
   const setupRenderEffect = (instance, vnode, container) => {
-    // 组件级更新
+    // 组件级更新, 数据更新会重新执行对应组件的effect
     instance.update = effect(
       function componentEffect() {
         if (!instance.isMounted) {
@@ -39,7 +39,7 @@ export function createRenderer(rendererOptions) {
 
           const { proxy } = instance;
           // 类比react的classComponent，调用render才是要渲染
-          const subTree = instance.subTree = instance.render.call(proxy, proxy);
+          const subTree = instance.subTree = instance.render.call(instance, proxy, proxy);
           // console.log(subTree);
 
           patch(null, subTree, container);
@@ -76,7 +76,8 @@ export function createRenderer(rendererOptions) {
           // 更新
           const prevTree = instance.subTree;
           const { proxy } = instance;
-          const nextTree = instance.render.call(proxy, proxy);
+          // 记录最新的虚拟dom
+          const nextTree = instance.subTree = instance.render.call(proxy, proxy);
           patch(prevTree, nextTree, container);
 
           // updated
@@ -88,6 +89,7 @@ export function createRenderer(rendererOptions) {
       {
         // 调度
         // 处理多次调用，只执行一次
+        // 异步更新, 同步先走完，在一次性执行
         scheduler: queueJob
       }
     );
@@ -192,7 +194,7 @@ export function createRenderer(rendererOptions) {
 
     // 比较有一方已经比完了
     if (i > e1) {
-      console.log(i, e1, e2);
+      // console.log(i, e1, e2);
       // 老的少，新的多
       /**
        新增: 后增
@@ -215,14 +217,14 @@ export function createRenderer(rendererOptions) {
         }
       }
     } else if (i > e2) {
-      console.log(
-        `
-        删除
-        i: ${i},
-        e1: ${e1},
-        e2: ${e2}
-        `
-      );
+      // console.log(
+      //   `
+      //   删除
+      //   i: ${i},
+      //   e1: ${e1},
+      //   e2: ${e2}
+      //   `
+      // );
       /**
       删除：后删
       c1: [a,b,c,d]
@@ -275,7 +277,7 @@ export function createRenderer(rendererOptions) {
           newIndexToOldIndexMap[newIndex - s2] = i + 1;
 
           // 对比oldVNode和新的vnode， 复用
-          // todo 比较好了，位置不对
+          // 比较好了，位置不对
           patch(oldVNode, c2[newIndex], el);
         }
       }
@@ -296,7 +298,7 @@ export function createRenderer(rendererOptions) {
           patch(null, child, el, anchor);
         } else {
           // notify: 剩余节点都得操作一次，性能问题
-          hostInsert(child.el, el, anchor);
+          // hostInsert(child.el, el, anchor);
 
           // [1,2,3,4,5,6]
           // [1,6,2,3,4,5]
@@ -411,11 +413,11 @@ export function createRenderer(rendererOptions) {
     // 组件渲染
     // 核心流程：setup返回值  -> render
 
-    // 1.实例,同时挂载到虚拟节点上
+    // 1.创建实例,根据虚拟节点
     const instance = vnode.component = createComponentInstance(vnode);
-    // 2. 需要的数据解析到实例上
+    // 2. 解析数据解析到实例上
     setupComponent(instance);
-    // 3. 创建effect让render执行
+    // 3. 创建render的effect
     setupRenderEffect(instance, vnode, container);
   };
 
@@ -475,7 +477,7 @@ export function createRenderer(rendererOptions) {
   /**
    * 打补丁：挂载和更新的功能
    * @param n1 旧节点
-   * @param n2 新节点
+   * @param n2 新节点©
    * @param container 挂载容器
    * @param anchor 当前元素的参照物
    */

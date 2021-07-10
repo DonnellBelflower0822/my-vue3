@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app">{{counter}}</div>
+  <script src="./vue.global.js"></script>
+  <script>
+    const Counter = {
+      props: {
+        name: String
+      },
+      setup(props, context) {
+        // {name:'allen'}
+        console.log(props)
+        // {b:'c'}
+        console.log(context.attrs)
+        console.log(context.slots)
+        console.log(context.emit)
+
+        return () => (
+          Vue.h('div', null, props.name)
+        )
+      }
+    }
+
+    Vue.createApp(Counter, { name: 'allen', b: 'c' }).mount('#app')
+  </script>
+
+</body>
+
+</html>

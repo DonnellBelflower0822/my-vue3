@@ -2,7 +2,6 @@ import { isArray, isObject } from '@vue/shared/src';
 import { createVNode, isVNode } from './vnode';
 
 export function h(type, propsOrChildren, children?) {
-  // console.log(type, propsOrChildren, children);
   const { length } = arguments;
   if (length === 2) {
     // 类型 + props

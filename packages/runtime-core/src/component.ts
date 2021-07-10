@@ -26,13 +26,15 @@ export function setupComponent(instance) {
   // todo 插槽
   instance.children = children;
 
-  const flag = instance.vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT;
-  if (flag) {
-    // 带状态的组件
-    // instance.setupState;
+  const isStateful = instance.vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT;
+  // 带状态的组件
+  if (isStateful) {
+    // 调用setup
+    // 并将返回值填充 instance.setupState / instance.render;
     setupStatefulComponent(instance);
   }
 }
+
 export let currentInstance = null;
 
 export const setCurrentInstance = (instance) => {
@@ -44,7 +46,7 @@ export const getCurrentInstance = () => {
 };
 
 function setupStatefulComponent(instance) {
-  // 代理
+  // 代理, 将data,props,事件代理到instance.proxy
   instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
 
   // 组件类型
@@ -61,7 +63,7 @@ function setupStatefulComponent(instance) {
     const setupResult = setup(instance.proxy, setupContext);
 
     currentInstance = null;
-    
+
     handleSetupResult(instance, setupResult);
   }
   else {
@@ -94,11 +96,6 @@ function finishComponentSetup(instance) {
 
     instance.render = Component.render;
   }
-
-  // 兼容vue2
-
-  // render
-  // console.log(instance)
 }
 
 function createContext(instance) {

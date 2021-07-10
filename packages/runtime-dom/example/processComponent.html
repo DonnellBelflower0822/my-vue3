@@ -39,11 +39,11 @@
       }
     }
 
-    // const Comp2 = {
-    //   render() {
-    //     return h('div', {}, 'Comp2')
-    //   }
-    // }
+    const Comp2 = {
+      render() {
+        return h('div', {}, 'Comp2')
+      }
+    }
 
     const App = {
       setup(props, context) {
@@ -54,8 +54,7 @@
       },
       render(proxy) {
         return h('div', {},
-          // proxy.flag.value ? h(Comp1) : h(Comp2),
-          h(Comp1, { flag: proxy.flag }),
+          proxy.flag.value ? h(Comp1, { flag: proxy.flag }) : h(Comp2),
           h('button', {
             onClick: () => {
               proxy.flag.value += 1

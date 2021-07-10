@@ -1,5 +1,5 @@
-const arr1 = ['d', 'a', 'b', 'c']
-const arr2 = ['a', 'b', 'c']
+const arr1 = ['d', 'a', 'b', 'c', 'd']
+const arr2 = ['a', 'b', 'c', 'd']
 
 function diff(c1, c2) {
   let i = 0

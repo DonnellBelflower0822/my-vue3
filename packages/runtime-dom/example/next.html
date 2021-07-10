@@ -20,30 +20,16 @@
 
     // 父传入儿子传入属性，儿子更新是否更新， 内部会将儿子自身的更新移除
     // 儿子使用了属性，属性变化了要不要更新  只执行一次
-
-    const Comp1 = {
-      setup() {
-        const a = reactive({ name: 'allen' })
-        return { a }
+    const Comp = {
+      props: {
+        flag: {
+          type: Number
+        }
       },
       render(proxy) {
-        return h('div', {},
-          h('div', {}, 'Comp1'),
-          h('div', {}, 'props ' + proxy.flag.value),
-          h('div', {
-            onClick: () => {
-              proxy.a.name = 'tom'
-            }
-          }, 'data ' + proxy.a.name),
-        )
+        return h('div', {}, 'Comp ----' + proxy.flag)
       }
     }
-
-    // const Comp2 = {
-    //   render() {
-    //     return h('div', {}, 'Comp2')
-    //   }
-    // }
 
     const App = {
       setup(props, context) {
@@ -54,8 +40,7 @@
       },
       render(proxy) {
         return h('div', {},
-          // proxy.flag.value ? h(Comp1) : h(Comp2),
-          h(Comp1, { flag: proxy.flag }),
+          h(Comp, { flag: proxy.flag.value }),
           h('button', {
             onClick: () => {
               proxy.flag.value += 1
