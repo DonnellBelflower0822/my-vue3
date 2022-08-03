@@ -30,6 +30,7 @@ export function createRenderer(rendererOptions) {
     instance.update = effect(
       function componentEffect() {
         if (!instance.isMounted) {
+          // 挂载阶段
           const { bm, m } = instance;
 
           // beforeMount
